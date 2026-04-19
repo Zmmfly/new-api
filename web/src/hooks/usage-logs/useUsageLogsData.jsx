@@ -60,6 +60,7 @@ export const useLogsData = () => {
     COST: 'cost',
     RETRY: 'retry',
     IP: 'ip',
+    STATUS_CODE: 'status_code',
     DETAILS: 'details',
   };
 
@@ -123,6 +124,7 @@ export const useLogsData = () => {
       [COLUMN_KEYS.COST]: true,
       [COLUMN_KEYS.RETRY]: isAdminUser,
       [COLUMN_KEYS.IP]: true,
+      [COLUMN_KEYS.STATUS_CODE]: false,
       [COLUMN_KEYS.DETAILS]: true,
     };
   };

@@ -229,6 +229,24 @@ function renderUseTime(type, t) {
   }
 }
 
+function renderTps(completionTokens, useTime) {
+  const tokens = parseInt(completionTokens);
+  const time = parseInt(useTime);
+  if (!tokens || tokens <= 0 || !time || time <= 0) return null;
+  const tps = (tokens / time).toFixed(1);
+  let color = 'green';
+  if (tps < 30) {
+    color = 'orange';
+  } else if (tps > 80) {
+    color = 'red';
+  }
+  return (
+    <Tag color={color} shape='circle'>
+      {tps} t/s
+    </Tag>
+  );
+}
+
 function renderFirstUseTime(type, t) {
   let time = parseFloat(type) / 1000.0;
   time = time.toFixed(1);
@@ -826,7 +844,16 @@ export const getLogsColumns = ({
             record.type === 2 ||
             record.type === 5 ||
             record.type === 6) ? (
-          <>{<span> {text} </span>}</>
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 4,
+            }}
+          >
+            <span>{text}</span>
+            {renderTps(text, record.use_time)}
+          </div>
         ) : (
           <></>
         );
@@ -927,6 +954,25 @@ export const getLogsColumns = ({
           }
         }
         return isAdminUser ? <div>{content}</div> : <></>;
+      },
+    },
+    {
+      key: COLUMN_KEYS.STATUS_CODE,
+      title: 'HTTP',
+      dataIndex: 'status_code',
+      render: (text, record, index) => {
+        const other = getLogOther(record.other);
+        const code = other?.status_code;
+        if (code == null) {
+          return <span style={{ color: 'var(--semi-color-text-2)' }}>—</span>;
+        }
+        let color = 'green';
+        if (code >= 400) {
+          color = 'red';
+        } else if (code >= 300) {
+          color = 'orange';
+        }
+        return <Tag color={color}>{code}</Tag>;
       },
     },
     {
