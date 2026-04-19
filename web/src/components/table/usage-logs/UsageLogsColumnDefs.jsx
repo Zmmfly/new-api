@@ -972,7 +972,40 @@ export const getLogsColumns = ({
         } else if (code >= 300) {
           color = 'orange';
         }
-        return <Tag color={color}>{code}</Tag>;
+        const tag = <Tag color={color}>{code}</Tag>;
+        const errorMessage = other?.error_message;
+        const errorType = other?.error_type;
+        const errorCode = other?.error_code;
+        if (errorMessage || errorType || errorCode) {
+          return (
+            <Tooltip
+              content={
+                <div style={{ maxWidth: 400 }}>
+                  {errorType && (
+                    <div>
+                      <span style={{ opacity: 0.7 }}>Type: </span>
+                      {errorType}
+                    </div>
+                  )}
+                  {errorCode && (
+                    <div>
+                      <span style={{ opacity: 0.7 }}>Code: </span>
+                      {errorCode}
+                    </div>
+                  )}
+                  {errorMessage && (
+                    <div style={{ marginTop: 4, wordBreak: 'break-word' }}>
+                      {errorMessage}
+                    </div>
+                  )}
+                </div>
+              }
+            >
+              {tag}
+            </Tooltip>
+          );
+        }
+        return tag;
       },
     },
     {
