@@ -229,21 +229,33 @@ function renderUseTime(type, t) {
   }
 }
 
-function renderTps(completionTokens, useTime) {
+function renderTps(completionTokens, useTime, frtMs) {
   const tokens = parseInt(completionTokens);
-  const time = parseInt(useTime);
-  if (!tokens || tokens <= 0 || !time || time <= 0) return null;
-  const tps = (tokens / time).toFixed(1);
-  let color = 'green';
-  if (tps < 30) {
-    color = 'orange';
-  } else if (tps > 80) {
-    color = 'red';
+  const totalTime = parseInt(useTime);
+  if (!tokens || tokens <= 0 || !totalTime || totalTime <= 0) return null;
+  const tps = (tokens / totalTime).toFixed(1);
+  const frtSec = frtMs ? parseFloat(frtMs) / 1000.0 : 0;
+  const genTime = totalTime - frtSec;
+  const genTps = genTime > 0 ? (tokens / genTime).toFixed(1) : null;
+  const getColor = (v) => {
+    if (v < 30) return 'orange';
+    if (v > 80) return 'red';
+    return 'green';
+  };
+  if (genTps && genTps !== tps) {
+    return (
+      <Space spacing={4}>
+        <Tooltip content={`体感速率 (总耗时 ${totalTime}s)`}>
+          <Tag color={getColor(tps)} shape='circle'>{tps} t/s</Tag>
+        </Tooltip>
+        <Tooltip content={`生成速率 (去除首字延迟 ${frtSec.toFixed(1)}s)`}>
+          <Tag color={getColor(genTps)} shape='circle'>{genTps} t/s*</Tag>
+        </Tooltip>
+      </Space>
+    );
   }
   return (
-    <Tag color={color} shape='circle'>
-      {tps} t/s
-    </Tag>
+    <Tag color={getColor(tps)} shape='circle'>{tps} t/s</Tag>
   );
 }
 
@@ -852,7 +864,7 @@ export const getLogsColumns = ({
             }}
           >
             <span>{text}</span>
-            {renderTps(text, record.use_time)}
+            {renderTps(text, record.use_time, getLogOther(record.other)?.frt)}
           </div>
         ) : (
           <></>
