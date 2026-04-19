@@ -229,19 +229,26 @@ function renderUseTime(type, t) {
   }
 }
 
-function renderTps(completionTokens, useTime, frtMs) {
+function renderTps(completionTokens, useTime, frtMs, isStream) {
   const tokens = parseInt(completionTokens);
   const totalTime = parseInt(useTime);
   if (!tokens || tokens <= 0 || !totalTime || totalTime <= 0) return null;
   const tps = (tokens / totalTime).toFixed(1);
-  const frtSec = frtMs ? parseFloat(frtMs) / 1000.0 : 0;
-  const genTime = totalTime - frtSec;
-  const genTps = genTime > 0 ? (tokens / genTime).toFixed(1) : null;
   const getColor = (v) => {
     if (v < 30) return 'orange';
     if (v > 80) return 'red';
     return 'green';
   };
+  if (!isStream) {
+    return (
+      <Tooltip content={`体感速率 (总耗时 ${totalTime}s)`}>
+        <Tag color={getColor(tps)} shape='circle'>{tps} t/s</Tag>
+      </Tooltip>
+    );
+  }
+  const frtSec = frtMs ? parseFloat(frtMs) / 1000.0 : 0;
+  const genTime = totalTime - frtSec;
+  const genTps = genTime > 0 ? (tokens / genTime).toFixed(1) : null;
   if (genTps && genTps !== tps) {
     return (
       <Space spacing={4}>
@@ -255,7 +262,9 @@ function renderTps(completionTokens, useTime, frtMs) {
     );
   }
   return (
-    <Tag color={getColor(tps)} shape='circle'>{tps} t/s</Tag>
+    <Tooltip content={`体感速率 (总耗时 ${totalTime}s)`}>
+      <Tag color={getColor(tps)} shape='circle'>{tps} t/s</Tag>
+    </Tooltip>
   );
 }
 
@@ -864,7 +873,7 @@ export const getLogsColumns = ({
             }}
           >
             <span>{text}</span>
-            {renderTps(text, record.use_time, getLogOther(record.other)?.frt)}
+            {renderTps(text, record.use_time, getLogOther(record.other)?.frt, record.is_stream)}
           </div>
         ) : (
           <></>
