@@ -249,7 +249,7 @@ function renderTps(completionTokens, useTime, frtMs, isStream) {
   const frtSec = frtMs ? parseFloat(frtMs) / 1000.0 : 0;
   const genTime = totalTime - frtSec;
   const genTps = genTime > 0 ? (tokens / genTime).toFixed(1) : null;
-  if (genTps && genTps !== tps) {
+  if (genTps) {
     return (
       <Space spacing={4}>
         <Tooltip content={`体感速率 (总耗时 ${totalTime}s)`}>
