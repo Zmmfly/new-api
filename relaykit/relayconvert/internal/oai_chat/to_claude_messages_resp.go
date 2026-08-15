@@ -59,11 +59,16 @@ func buildClaudeUsageFromOpenAIUsage(oaiUsage *dto.Usage) *dto.ClaudeUsage {
 	)
 	cacheCreationTokens := oaiUsage.PromptTokensDetails.CacheCreationTokensTotal()
 	inputTokens := oaiUsage.PromptTokens
-	if oaiUsage.PromptTokensDetails.CacheWriteTokens > 0 {
-		// OpenAI native cache-write usage counts cached and cache-write tokens
-		// inside prompt_tokens, while Claude semantics reports input_tokens
-		// excluding both. Both counts are unadjusted prefixes and may overlap,
-		// so clamp a negative remainder at zero.
+	if oaiUsage.PromptTokensDetails.CachedTokens > 0 || oaiUsage.PromptTokensDetails.CacheWriteTokens > 0 {
+		// OpenAI-style usage counts cache-read and cache-write tokens inside
+		// prompt_tokens, while Claude semantics reports input_tokens excluding
+		// both. The subtraction must also cover plain cache reads, not only the
+		// explicit cache-write case: gateways routing Anthropic Messages traffic
+		// to OpenAI/Responses upstreams report prompt_tokens as the full prompt
+		// total including cache hits, and leaking that total into Claude's
+		// input_tokens double-counts the cached prefix for Anthropic clients.
+		// Both counts are unadjusted prefixes and may overlap, so clamp a
+		// negative remainder at zero.
 		inputTokens = oaiUsage.PromptTokens - oaiUsage.PromptTokensDetails.CachedTokens - cacheCreationTokens
 		if inputTokens < 0 {
 			inputTokens = 0

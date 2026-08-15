@@ -103,6 +103,41 @@ func TestBuildClaudeUsageFromOpenAICacheWriteUsage(t *testing.T) {
 	assert.Equal(t, 3616, usage.BillingUsage.OpenAIUsage.PromptTokensDetails.CacheWriteTokens)
 }
 
+func TestBuildClaudeUsageFromOpenAICacheReadUsage(t *testing.T) {
+	usage := buildClaudeUsageFromOpenAIUsage(&dto.Usage{
+		PromptTokens:     59137,
+		CompletionTokens: 100,
+		TotalTokens:      59237,
+		PromptTokensDetails: dto.InputTokenDetails{
+			// Gateways routing Anthropic Messages traffic to OpenAI/Responses
+			// upstreams report cache reads without any cache-write fields.
+			CachedTokens: 48640,
+		},
+	})
+
+	require.NotNil(t, usage)
+	// Claude semantics: input_tokens excludes cache reads, so the cached
+	// prefix must not be double-counted into the uncached input total.
+	assert.Equal(t, 10497, usage.InputTokens)
+	assert.Equal(t, 48640, usage.CacheReadInputTokens)
+	assert.Equal(t, 0, usage.CacheCreationInputTokens)
+	assert.Equal(t, 100, usage.OutputTokens)
+}
+
+func TestBuildClaudeUsageFromOpenAICacheReadClampsOverflow(t *testing.T) {
+	usage := buildClaudeUsageFromOpenAIUsage(&dto.Usage{
+		PromptTokens:     100,
+		CompletionTokens: 7,
+		PromptTokensDetails: dto.InputTokenDetails{
+			CachedTokens: 130,
+		},
+	})
+
+	require.NotNil(t, usage)
+	assert.Equal(t, 0, usage.InputTokens)
+	assert.Equal(t, 130, usage.CacheReadInputTokens)
+}
+
 func TestStreamResponseOpenAI2ClaudeClosesTextThinkingAndToolBlocks(t *testing.T) {
 	info := &convmeta.Values{
 		ClaudeConvertInfo: &convmeta.ClaudeConvertInfo{
