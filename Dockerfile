@@ -12,8 +12,12 @@ ENV GO111MODULE=on CGO_ENABLED=0 GOWORK=off
 
 ARG TARGETOS
 ARG TARGETARCH
+# Optional module-proxy override for restricted networks; defaults to the
+# standard upstream proxy so regular builds are unchanged.
+ARG GOPROXY=https://proxy.golang.org,direct
 ENV GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH:-amd64}
 ENV GOEXPERIMENT=greenteagc
+ENV GOPROXY=${GOPROXY}
 
 WORKDIR /build
 
